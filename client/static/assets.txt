@@ -1,0 +1,3 @@
+png://ferris.png
+png://water.png
+png://logo.png
