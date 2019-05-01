@@ -1,7 +1,10 @@
 # Your Time Is Currency
 ### Simple multiplayer game made with Rust and Oxygen game engine
 
-![demo](./media/your-precious-time.gif)
+![demo](https://github.com/PsichiX/your-time-is-currency/blob/master/media/your-precious-time.gif?raw=true)
+
+## Oxygengine
+https://github.com/PsichiX/oxygengine
 
 ## Installation
 - Make sure that Rust toolchain is installed ( https://rustup.rs/ );
