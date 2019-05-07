@@ -56,7 +56,7 @@ pub fn run() -> Result<(), JsValue> {
         .with_system(TimeSystem, "time", &[])
         .build(LoadingState::default(), WebAppTimer::default());
 
-    AppRunner::new(app).run::<WebAppRunner, _>()?;
+    AppRunner::new(app).run(WebAppRunner)?;
 
     Ok(())
 }

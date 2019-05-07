@@ -16,11 +16,15 @@ use crate::{
 use oxygengine::prelude::*;
 use std::collections::{HashMap, HashSet};
 
-// const WATER_MASK_ALPHA_MATRIX: &[u8] = &[230, 200, 170, 120, 170, 200, 230];
-const WATER_MASK_ALPHA_MATRIX: &[u8] = &[
-    250, 250, 250, 250, 250, 250, 250, 250, 240, 240, 240, 240, 240, 250, 250, 240, 225, 225, 225,
-    240, 250, 250, 240, 225, 205, 225, 240, 250, 250, 240, 225, 225, 225, 240, 250, 250, 240, 240,
-    240, 240, 240, 250, 250, 250, 250, 250, 250, 250, 250,
+#[rustfmt::skip]
+const WATER_MASK_ALPHA_MATRIX: &[Scalar] = &[
+    0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05,
+    0.05, 0.10, 0.10, 0.10, 0.10, 0.10, 0.05,
+    0.05, 0.10, 0.15, 0.15, 0.15, 0.10, 0.05,
+    0.05, 0.10, 0.15, 0.20, 0.15, 0.10, 0.05,
+    0.05, 0.10, 0.15, 0.15, 0.15, 0.10, 0.05,
+    0.05, 0.10, 0.10, 0.10, 0.10, 0.10, 0.05,
+    0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05,
 ];
 
 pub struct GameState {
@@ -52,25 +56,12 @@ impl GameState {
         let mut commands = vec![Command::Store];
         for col in -3..=3 {
             for row in -3..=3 {
-                let align = Vec2::new(0.5 + col as Scalar, 0.5 + row as Scalar);
-                commands.push(Command::Draw(Image::new("water.png").align(align).into()));
-            }
-        }
-        for col in -3..=3 {
-            for row in -3..=3 {
                 let c: i32 = col + 3;
                 let r: i32 = row + 3;
                 let alpha = WATER_MASK_ALPHA_MATRIX[r as usize * 7 + c as usize];
-                let color = Color::rgba(11, 72, 107, alpha);
                 let align = Vec2::new(0.5 + col as Scalar, 0.5 + row as Scalar);
-                commands.push(Command::Draw(
-                    Rectangle {
-                        color,
-                        rect: [0.0, 0.0, 128.0, 128.0].into(),
-                    }
-                    .align(align)
-                    .into(),
-                ));
+                commands.push(Command::Alpha(alpha));
+                commands.push(Command::Draw(Image::new("water.png").align(align).into()));
             }
         }
         commands.push(Command::Restore);
@@ -303,6 +294,10 @@ impl State for GameState {
             return StateChange::Swap(Box::new(LobbyState::default()));
         }
 
+        for entity in world.read_resource::<HierarchyChangeRes>().removed() {
+            self.entities.remove(entity);
+        }
+
         // process messages.
         let messages = network
             .read(self.client)
@@ -367,11 +362,16 @@ impl State for GameState {
                     .get(player)
                     .map(|t| t.get_translation())
                     .unwrap_or_default();
+                let velocity = world
+                    .read_storage::<Velocity>()
+                    .get(player)
+                    .map(|v| v.0)
+                    .unwrap_or_default();
                 let message = MessageData::PlayerState(MsgPlayerState {
                     id: self.info.id,
                     time,
                     position,
-                    velocity: Default::default(),
+                    velocity,
                 });
                 let id = message.id();
                 let data: Vec<u8> = message.into();
